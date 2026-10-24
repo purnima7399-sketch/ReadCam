@@ -27,3 +27,18 @@ jobs:
         with:
           name: ReadCam-apk
           path: ReadCam.apk
+
+      # Publishes the APK as a plain download on the repo's "latest" release page,
+      # so it can be installed straight from a phone browser.
+      - name: Publish latest APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest ReadCam.apk \
+            --title "ReadCam (latest build)" \
+            --notes "Tap ReadCam.apk below to download and install on your phone." \
+            --target "${{ github.sha }}"
+
+permissions:
+  contents: write
