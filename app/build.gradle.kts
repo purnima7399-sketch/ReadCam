@@ -15,6 +15,16 @@ android {
         versionName = "1.0"
     }
 
+    // Fixed signing key so each new build installs over the previous one.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = rootProject.file("keystore/readcam.jks")
+            storePassword = "readcam"
+            keyAlias = "readcam"
+            keyPassword = "readcam"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
