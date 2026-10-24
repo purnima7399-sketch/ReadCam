@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/floatRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- Top bar: drag anywhere on it (outside the buttons) to move the panel -->
+    <LinearLayout
+        android:id="@+id/floatHeader"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="4dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="⠿  drag"
+            android:textColor="#AAFFFFFF"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/floatSmaller"
+            style="@style/FloatButton"
+            android:text="A−"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/floatBigger"
+            style="@style/FloatButton"
+            android:text="A+" />
+
+        <TextView
+            android:id="@+id/floatOpacity"
+            style="@style/FloatButton"
+            android:text="◐" />
+
+        <TextView
+            android:id="@+id/floatCollapse"
+            style="@style/FloatButton"
+            android:text="—" />
+
+        <TextView
+            android:id="@+id/floatClose"
+            style="@style/FloatButton"
+            android:text="✕" />
+    </LinearLayout>
+
+    <ScrollView
+        android:id="@+id/floatScroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fadeScrollbars="false"
+        android:scrollbarStyle="insideOverlay"
+        android:scrollbars="vertical">
+
+        <TextView
+            android:id="@+id/floatText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingMultiplier="1.25"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="48dp"
+            android:shadowColor="#FF000000"
+            android:shadowRadius="4"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp" />
+    </ScrollView>
+
+    <!-- Bottom-right grip: drag to resize -->
+    <TextView
+        android:id="@+id/floatResize"
+        android:layout_width="44dp"
+        android:layout_height="28dp"
+        android:layout_gravity="end"
+        android:gravity="center"
+        android:text="◢"
+        android:textColor="#AAFFFFFF"
+        android:textSize="16sp" />
+</LinearLayout>

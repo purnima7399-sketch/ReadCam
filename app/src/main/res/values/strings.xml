@@ -10,4 +10,5 @@
     <string name="back">Back</string>
     <string name="record">Start or stop recording</string>
     <string name="starting_camera">Starting camera…</string>
+    <string name="float_over_camera">Float over camera</string>
 </resources>
