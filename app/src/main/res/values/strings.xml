@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ReadCam</string>
+    <string name="subtitle">Your scripts. Tap one to read it and record yourself.</string>
+    <string name="empty_notes">No scripts yet.\n\nTap New script, or share text here from Google Keep or any notes app.</string>
+    <string name="new_script">New script</string>
+    <string name="title_hint">Title</string>
+    <string name="body_hint">Paste or type your script here…</string>
+    <string name="read_and_record">Read &amp; record</string>
+    <string name="back">Back</string>
+    <string name="record">Start or stop recording</string>
+    <string name="starting_camera">Starting camera…</string>
+</resources>

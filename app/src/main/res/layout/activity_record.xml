@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:keepScreenOn="true">
+
+    <!-- The whole script, static. You scroll it yourself; nothing moves on its own. -->
+    <ScrollView
+        android:id="@+id/textScroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="112dp"
+        android:fadingEdgeLength="24dp"
+        android:requiresFadingEdge="vertical"
+        android:scrollbars="none">
+
+        <TextView
+            android:id="@+id/scriptText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingMultiplier="1.3"
+            android:paddingStart="22dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="22dp"
+            android:paddingBottom="260dp"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp" />
+    </ScrollView>
+
+    <!-- Corner selfie preview, Meet-style. Drag it to any corner. -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/previewCard"
+        android:layout_width="112dp"
+        android:layout_height="199dp"
+        app:cardBackgroundColor="#000000"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="8dp"
+        app:strokeColor="#55FFFFFF"
+        app:strokeWidth="2dp">
+
+        <androidx.camera.view.PreviewView
+            android:id="@+id/previewView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <LinearLayout
+        android:id="@+id/controls"
+        android:layout_width="match_parent"
+        android:layout_height="112dp"
+        android:layout_gravity="bottom"
+        android:background="#E6000000"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/smallerText"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="56dp"
+            android:layout_height="wrap_content"
+            android:minWidth="0dp"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:text="A−"
+            android:textSize="14sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/biggerText"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="56dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:minWidth="0dp"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:text="A+"
+            android:textSize="18sp" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/recordButton"
+            android:layout_width="76dp"
+            android:layout_height="76dp"
+            android:background="@drawable/rec_idle"
+            android:contentDescription="@string/record" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/timerText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:text="00:00"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/qualityText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="@string/starting_camera"
+                android:textColor="@color/text_dim"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/countdownText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:shadowColor="#CC000000"
+        android:shadowRadius="16"
+        android:textColor="#FFFFFF"
+        android:textSize="120sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+</FrameLayout>
