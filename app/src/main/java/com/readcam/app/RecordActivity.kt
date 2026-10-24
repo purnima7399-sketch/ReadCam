@@ -2,9 +2,15 @@ package com.readcam.app
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
+import android.media.CamcorderProfile
+import android.media.MediaRecorder
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -19,7 +25,9 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.DynamicRange
 import androidx.camera.core.Preview
@@ -45,6 +53,7 @@ class RecordActivity : AppCompatActivity() {
         private const val PREFS = "record_prefs"
         private const val KEY_TEXT_SIZE = "text_size"
         private const val KEY_CORNER = "corner"
+        private const val KEY_QUALITY = "quality" // "UHD", "FHD" or "HD"
         private const val MIN_TEXT_SP = 16f
         private const val MAX_TEXT_SP = 64f
 
@@ -65,6 +74,9 @@ class RecordActivity : AppCompatActivity() {
 
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
+    private var frontCameraInfo: CameraInfo? = null
+    private var activeLabel: String? = null
+    private val attemptNotes = mutableListOf<String>()
 
     private val handler = Handler(Looper.getMainLooper())
     private var countingDown = false
@@ -123,6 +135,8 @@ class RecordActivity : AppCompatActivity() {
         findViewById<View>(R.id.smallerText).setOnClickListener { changeTextSize(-2f) }
         findViewById<View>(R.id.biggerText).setOnClickListener { changeTextSize(2f) }
         recordButton.setOnClickListener { toggleRecording() }
+        qualityText.setOnClickListener { showQualityPicker() }
+        timerText.setOnClickListener { showQualityPicker() }
 
         setupPinchToResize()
         setupDraggablePreview()
@@ -169,19 +183,40 @@ class RecordActivity : AppCompatActivity() {
                 return@addListener
             }
 
-            // Best quality the selfie camera supports, trying 4K first.
-            val supported = Recorder.getVideoCapabilities(info).getSupportedQualities(DynamicRange.SDR)
-            val candidates = listOf(Quality.UHD, Quality.FHD, Quality.HD)
-                .filter { it in supported }
-                .ifEmpty { listOf(Quality.HIGHEST) }
+            frontCameraInfo = info
+            attemptNotes.clear()
+
+            val caps = Recorder.getVideoCapabilities(info)
+            val sdrQualities = caps.getSupportedQualities(DynamicRange.SDR)
+            val hdrQualities = if (DynamicRange.HLG_10_BIT in caps.supportedDynamicRanges) {
+                caps.getSupportedQualities(DynamicRange.HLG_10_BIT)
+            } else {
+                emptyList()
+            }
+
+            // Start from the chosen quality and step down if the camera can't do it.
+            val wanted = qualityFromKey(prefs.getString(KEY_QUALITY, "UHD"))
+            val ladder = listOf(Quality.UHD, Quality.FHD, Quality.HD)
+            val candidates = ladder.drop(ladder.indexOf(wanted).coerceAtLeast(0))
 
             for (quality in candidates) {
+                // Prefer normal (SDR) video; use HDR only if that's the only way to get this quality.
+                val range = when (quality) {
+                    in sdrQualities -> DynamicRange.SDR
+                    in hdrQualities -> DynamicRange.HLG_10_BIT
+                    else -> {
+                        attemptNotes.add("${labelFor(quality)}: not offered to apps by the selfie camera")
+                        continue
+                    }
+                }
                 try {
                     val recorder = Recorder.Builder()
                         .setQualitySelector(QualitySelector.from(quality))
                         .setTargetVideoEncodingBitRate(bitrateFor(quality))
                         .build()
-                    val capture = VideoCapture.withOutput(recorder)
+                    val capture = VideoCapture.Builder(recorder)
+                        .setDynamicRange(range)
+                        .build()
                     val preview = Preview.Builder().build()
                     preview.setSurfaceProvider(previewView.surfaceProvider)
 
@@ -189,14 +224,140 @@ class RecordActivity : AppCompatActivity() {
                     provider.bindToLifecycle(this, selector, preview, capture)
 
                     videoCapture = capture
-                    qualityText.text = "${labelFor(quality)} · selfie"
+                    val label = labelFor(quality) + if (range == DynamicRange.HLG_10_BIT) " HDR" else ""
+                    activeLabel = label
+                    qualityText.text = "$label · selfie ▾"
+                    if (quality != wanted) {
+                        toast("${labelFor(wanted)} isn't available on the selfie camera, using $label. Tap the quality label for details.")
+                    }
                     return@addListener
                 } catch (e: Exception) {
-                    // This quality can't run alongside the preview; try the next one down.
+                    attemptNotes.add("${labelFor(quality)}: couldn't start (${e.message})")
                 }
             }
-            qualityText.text = "Couldn't start camera"
+
+            // Last resort: whatever the camera calls its best.
+            try {
+                val recorder = Recorder.Builder()
+                    .setQualitySelector(QualitySelector.from(Quality.HIGHEST))
+                    .build()
+                val capture = VideoCapture.withOutput(recorder)
+                val preview = Preview.Builder().build()
+                preview.setSurfaceProvider(previewView.surfaceProvider)
+                provider.unbindAll()
+                provider.bindToLifecycle(this, selector, preview, capture)
+                videoCapture = capture
+                activeLabel = "Best available"
+                qualityText.text = "Best available · selfie ▾"
+            } catch (e: Exception) {
+                attemptNotes.add("Best available: couldn't start (${e.message})")
+                qualityText.text = "Couldn't start camera ▾"
+            }
         }, ContextCompat.getMainExecutor(this))
+    }
+
+    private fun qualityFromKey(key: String?): Quality = when (key) {
+        "FHD" -> Quality.FHD
+        "HD" -> Quality.HD
+        else -> Quality.UHD
+    }
+
+    // ------------------------------------------------------------ quality menu
+
+    private fun showQualityPicker() {
+        if (recording != null || countingDown) {
+            toast("Stop recording first")
+            return
+        }
+        val info = frontCameraInfo
+        val offered = info?.let { ci ->
+            val caps = Recorder.getVideoCapabilities(ci)
+            caps.supportedDynamicRanges.flatMap { caps.getSupportedQualities(it) }.toSet()
+        } ?: emptySet()
+
+        val keys = arrayOf("UHD", "FHD", "HD")
+        val qualities = keys.map { qualityFromKey(it) }
+        val names = qualities.map { q ->
+            labelFor(q) + if (info != null && q !in offered) "  (not offered by this camera)" else ""
+        }.toTypedArray()
+        val current = keys.indexOf(prefs.getString(KEY_QUALITY, "UHD")).coerceAtLeast(0)
+
+        AlertDialog.Builder(this)
+            .setTitle("Recording quality")
+            .setSingleChoiceItems(names, current) { dialog, which ->
+                prefs.edit().putString(KEY_QUALITY, keys[which]).apply()
+                dialog.dismiss()
+                qualityText.text = getString(R.string.starting_camera)
+                startCamera()
+            }
+            .setNeutralButton("Camera info") { _, _ -> showCameraInfo() }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+
+    private fun showCameraInfo() {
+        val text = buildCameraInfo()
+        AlertDialog.Builder(this)
+            .setTitle("Camera info")
+            .setMessage(text)
+            .setPositiveButton("Copy") { _, _ ->
+                val clipboard = getSystemService(ClipboardManager::class.java)
+                clipboard?.setPrimaryClip(ClipData.newPlainText("ReadCam camera info", text))
+                toast("Copied, you can paste it to Claude")
+            }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+
+    private fun buildCameraInfo(): String {
+        val sb = StringBuilder()
+        sb.append("Recording now: ${activeLabel ?: "not started"}\n")
+
+        frontCameraInfo?.let { ci ->
+            val caps = Recorder.getVideoCapabilities(ci)
+            sb.append("\nQualities the selfie camera offers apps:\n")
+            for (range in caps.supportedDynamicRanges) {
+                val name = when (range) {
+                    DynamicRange.SDR -> "Standard"
+                    DynamicRange.HLG_10_BIT -> "HDR (HLG)"
+                    else -> range.toString()
+                }
+                val list = caps.getSupportedQualities(range).joinToString { labelFor(it) }
+                sb.append("• $name: ${list.ifEmpty { "none" }}\n")
+            }
+        }
+
+        if (attemptNotes.isNotEmpty()) {
+            sb.append("\nWhat happened:\n")
+            attemptNotes.forEach { sb.append("• $it\n") }
+        }
+
+        try {
+            val manager = getSystemService(CameraManager::class.java)
+            for (id in manager.cameraIdList) {
+                val ch = manager.getCameraCharacteristics(id)
+                val facing = when (ch.get(CameraCharacteristics.LENS_FACING)) {
+                    CameraCharacteristics.LENS_FACING_FRONT -> "selfie"
+                    CameraCharacteristics.LENS_FACING_BACK -> "rear"
+                    else -> "other"
+                }
+                val level = ch.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)
+                val sizes = ch.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+                    ?.getOutputSizes(MediaRecorder::class.java)
+                    ?.sortedByDescending { it.width.toLong() * it.height }
+                    ?.take(3)
+                    ?.joinToString { "${it.width}×${it.height}" }
+                val profile4k = id.toIntOrNull()?.let {
+                    CamcorderProfile.hasProfile(it, CamcorderProfile.QUALITY_2160P)
+                }
+                sb.append("\nCamera $id ($facing), level $level\n")
+                sb.append("  largest video sizes: ${sizes ?: "unknown"}\n")
+                sb.append("  4K video profile: ${profile4k ?: "unknown"}\n")
+            }
+        } catch (e: Exception) {
+            sb.append("\nCouldn't read camera details: ${e.message}\n")
+        }
+        return sb.toString()
     }
 
     private fun bitrateFor(q: Quality): Int = when (q) {

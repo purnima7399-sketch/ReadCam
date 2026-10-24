@@ -118,10 +118,13 @@
                 android:id="@+id/qualityText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
                 android:gravity="end"
                 android:text="@string/starting_camera"
-                android:textColor="@color/text_dim"
-                android:textSize="12sp" />
+                android:textColor="#DDDDDD"
+                android:textSize="13sp" />
         </LinearLayout>
     </LinearLayout>
 
