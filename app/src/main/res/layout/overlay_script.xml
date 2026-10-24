@@ -21,9 +21,14 @@
             android:layout_weight="1"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="⠿  drag"
+            android:text="⠿"
             android:textColor="#AAFFFFFF"
             android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/floatScripts"
+            style="@style/FloatButton"
+            android:text="☰" />
 
         <TextView
             android:id="@+id/floatSmaller"

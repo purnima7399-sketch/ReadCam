@@ -10,5 +10,8 @@
     <string name="back">Back</string>
     <string name="record">Start or stop recording</string>
     <string name="starting_camera">Starting camera…</string>
-    <string name="float_over_camera">Float over camera</string>
+    <string name="float_over_camera">Float script</string>
+    <string name="tile_label">ReadCam script</string>
+    <string name="shortcut_float">Float script</string>
+    <string name="shortcut_float_long">Float last script over any app</string>
 </resources>

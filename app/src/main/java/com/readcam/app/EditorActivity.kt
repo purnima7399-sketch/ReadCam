@@ -30,7 +30,7 @@ class EditorActivity : AppCompatActivity() {
     // Notification permission only affects whether the "Close" notification shows;
     // the floating script works either way, so we carry on whatever the answer.
     private val notificationPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { launchFloating() }
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { chooseFloatTarget() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,11 +73,11 @@ class EditorActivity : AppCompatActivity() {
         }
         if (!Settings.canDrawOverlays(this)) {
             AlertDialog.Builder(this)
-                .setTitle("Allow floating over the camera")
+                .setTitle("Allow floating over other apps")
                 .setMessage(
-                    "To show your script on top of the camera app, ReadCam needs " +
+                    "To show your script on top of the camera, Meet or any other app, ReadCam needs " +
                         "\u201CDisplay over other apps\u201D.\n\nOn the next screen, turn it on for ReadCam, " +
-                        "then come back and tap Float over camera again."
+                        "then come back and tap Float script again."
                 )
                 .setPositiveButton("Open settings") { _, _ ->
                     startActivity(
@@ -94,11 +94,38 @@ class EditorActivity : AppCompatActivity() {
         ) {
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
-            launchFloating()
+            chooseFloatTarget()
         }
     }
 
-    private fun launchFloating() {
+    private fun chooseFloatTarget() {
+        AlertDialog.Builder(this)
+            .setTitle("Float this script")
+            .setItems(
+                arrayOf(
+                    "Over the camera (opens Pixel Camera in video mode)",
+                    "Over any app (Google Meet, etc.)",
+                )
+            ) { _, which ->
+                if (which == 0) floatOverCamera() else floatOverAnyApp()
+            }
+            .show()
+    }
+
+    private fun floatOverAnyApp() {
+        FloatingScriptService.start(this, note.id)
+        Toast.makeText(
+            this,
+            "Your script will stay on top. Open Meet or any app. Tip: add the ReadCam tile to Quick Settings.",
+            Toast.LENGTH_LONG,
+        ).show()
+        // Go to the home screen so the user can open whichever app they need.
+        startActivity(
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    }
+
+    private fun floatOverCamera() {
         FloatingScriptService.start(this, note.id)
         try {
             // Opens the Pixel Camera app straight into video mode.

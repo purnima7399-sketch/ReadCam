@@ -13,6 +13,14 @@ A notes app for scripts that also records you. Open a script and you get the who
   - The text and preview are not in the video; you get clean camera footage with sound.
 - Videos save to your gallery under **Movies › ReadCam**. The label under the timer shows the quality in use (4K, 1080p…).
 
+## Floating script (record in 4K with Pixel Camera, or read during a Meet call)
+
+- In a script, tap **Float script** and choose **Over the camera** (opens Pixel Camera in video mode) or **Over any app**.
+- Or add the **ReadCam script** tile to Quick Settings (or long-press the app icon → Float script) to float your last script from anywhere, e.g. mid-call.
+- Panel: drag the top bar to move, ◢ to resize, ☰ to switch scripts, A−/A+ or pinch for text size, ◐ for see-through, — to shrink to a bar, ✕ to close.
+- Turn the phone sideways and the panel turns with it, even in apps that keep the screen in portrait.
+- The first time, Android may block "Display over other apps" for a downloaded app: tap Float once, then Settings › Apps › ReadCam › ⋮ › Allow restricted settings, and try again.
+
 ## Building the APK
 
 **With Android Studio (on a computer):** open this folder, wait for it to finish syncing, connect the phone with USB debugging on, and press Run. Or use Build › Build APK(s) to get `app/build/outputs/apk/debug/app-debug.apk`.

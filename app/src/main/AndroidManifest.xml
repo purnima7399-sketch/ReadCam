@@ -26,6 +26,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <!-- Lets you share text from Google Keep or any app straight into ReadCam -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -42,6 +45,30 @@
             android:name=".RecordActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
+
+        <!-- Invisible launcher used by the Quick Settings tile and icon shortcut -->
+        <activity
+            android:name=".FloatLauncherActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- Quick Settings tile: float your last script over any app (Meet, Camera, ...) -->
+        <service
+            android:name=".ReadCamTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_notification"
+            android:label="@string/tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
 
         <!-- Shows the script in a floating window on top of the Pixel Camera app -->
         <service
